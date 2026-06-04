@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Мой Личный Конвертер Сессий</title>
+  <style>
+    body {
+      background-color: #121318;
+      color: #e3e4e6;
+      font-family: Arial, sans-serif;
+      padding: 40px 20px;
+      display: flex;
+      justify-content: center;
+    }
+    .wrapper {
+      width: 100%;
+      max-width: 600px;
+      background: #1a1b23;
+      padding: 25px;
+      border-radius: 12px;
+      border: 1px solid #2e303f;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    }
+    h2 {
+      margin-top: 0;
+      font-size: 20px;
+      color: #10b981;
+    }
+    p {
+      font-size: 14px;
+      color: #9ca3af;
+    }
+    textarea {
+      width: 100%;
+      height: 150px;
+      background: #242633;
+      border: 1px solid #373a4f;
+      border-radius: 6px;
+      color: #fff;
+      padding: 10px;
+      font-family: monospace;
+      box-sizing: border-box;
+      resize: vertical;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #10b981;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      font-weight: bold;
+      font-size: 15px;
+      cursor: pointer;
+      margin-top: 15px;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: #059669;
+    }
+    #error-msg {
+      color: #ef4444;
+      background: rgba(239, 68, 68, 0.1);
+      padding: 10px;
+      border-radius: 6px;
+      margin-top: 10px;
+      font-size: 13px;
+      display: none;
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="wrapper">
+    <h2>Локальный конвертер OpenAI -> Codex</h2>
+    <p>Вставь текст, полученный со страницы сессии ChatGPT, и нажми кнопку ниже.</p>
+    
+    <textarea id="inputData" placeholder='{"user": ... "accessToken": "..."}'></textarea>
+    
+    <div id="error-msg">Ошибка! Неверный формат данных. Убедись, что скопировал текст сессии полностью.</div>
+    
+    <button type="button" onclick="generateAuthJson()">Сгенерировать и скачать auth.json</button>
+  </div>
+
+  <script>
+    function generateAuthJson() {
+      const errorBox = document.getElementById("error-msg");
+      const textInput = document.getElementById("inputData");
+      
+      // Скрываем ошибку перед новой попыткой
+      errorBox.style.display = "none";
+      
+      try {
+        // Проверяем и парсим введённый текст в JSON-объект
+        const parsed = JSON.parse(textInput.value.trim());
+        
+        // Собираем строго ту структуру, которую мы разбирали руками
+        const finalAuth = {
+          "auth_mode": "chatgpt",
+          "OPENAI_API_KEY": null,
+          "tokens": {
+            "id_token": parsed.accessToken,
+            "access_token": parsed.accessToken,
+            "refresh_token": "rt_676",
+            "account_id": parsed.account.id
+          },
+          "last_refresh": parsed.expires
+        };
+        
+        // Превращаем готовый объект обратно в красивый текст для файла
+        const fileContent = JSON.stringify(finalAuth, null, 2);
+        
+        // Создаем файл в памяти браузера
+        const blob = new Blob([fileContent], { type: "application/json" });
+        const downloadLink = document.createElement("a");
+        
+        downloadLink.href = URL.createObjectURL(blob);
+        downloadLink.download = "auth.json"; // Имя скачиваемого файла
+        
+        // Имитируем клик для скачивания и очищаем поле
+        downloadLink.click();
+        textInput.value = "";
+        
+      } catch (err) {
+        // Если юзер вставил кривой текст или сломался парсинг — покажется ошибка
+        errorBox.style.display = "block";
+      }
+    }
+  </script>
+
+</body>
+</html>
